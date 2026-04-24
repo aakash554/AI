@@ -22,14 +22,19 @@ def cached_generate_revision_planner(topic: str):
 def cached_generate_grounded_quiz(topic: str):
     return generate_grounded_quiz(topic)
 
-st.set_page_config(page_title="Exam Revision Assistant", page_icon="📝", layout="wide")
+st.set_page_config(page_title="Exam Revision Assistant", layout="wide")
 
-st.title("📚 Exam Revision Assistant")
-st.markdown("Your local study companion powered by **Ollama**, **Langchain**, and **ChromaDB**.")
+st.title("Exam Revision Assistant")
+st.markdown("Your study companion powered by **Google Gemini API**, **Langchain**, and **ChromaDB**.")
 
-# Sidebar for PDF uploads
+# Sidebar for API Key and PDF uploads
 with st.sidebar:
-    st.header("1. Upload Study Materials")
+    st.header("1. Configuration")
+    api_key_input = st.text_input("Enter Google Gemini API Key", type="password")
+    if api_key_input:
+        os.environ["GOOGLE_API_KEY"] = api_key_input
+
+    st.header("2. Upload Study Materials")
     uploaded_files = st.file_uploader("Upload PDF files", type=["pdf"], accept_multiple_files=True)
     
     if st.button("Process PDFs"):
@@ -46,10 +51,14 @@ with st.sidebar:
             st.warning("Please upload a PDF first.")
             
     st.divider()
-    st.info("Ensure Ollama is running (`ollama serve`) with `llama3.1:8b` and `nomic-embed-text` models pulled.")
+    st.info("Ensure you have provided a valid Google Gemini API Key above.")
 
 # Main Interface
-st.header("2. Choose an Assistant Tool")
+if "GOOGLE_API_KEY" not in os.environ or not os.environ["GOOGLE_API_KEY"]:
+    st.warning("⚠️ Please enter your Google Gemini API Key in the sidebar to proceed.")
+    st.stop()
+
+st.header("3. Choose an Assistant Tool")
 
 tool_choice = st.radio("Select a task:", 
                        ("Flashcard Generator", "Revision Planner", "Grounded Quiz"), 
@@ -68,12 +77,12 @@ if st.button("Generate"):
             if tool_choice == "Revision Planner":
                 with st.spinner("Structuring your study schedule..."):
                     plan_result = cached_generate_revision_planner(topic)
-                    st.subheader("🗓️ Study Plan")
+                    st.subheader("Study Plan")
                     st.markdown(plan_result)
 
             elif tool_choice == "Flashcard Generator":
                 with st.spinner("Analyzing texts and generating flashcards..."):
-                    st.subheader("🗂️ Your Flashcards")
+                    st.subheader("Your Flashcards")
                     flashcards_result = cached_generate_flashcards(topic)
                     
                     # Fix: If the LLM wrapped the JSON list inside a dictionary (e.g. {"cards": [...]})
