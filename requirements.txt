@@ -8,4 +8,6 @@ chromadb
 pypdf
 rank_bm25
 python-dotenv
-
+fastapi
+uvicorn
+python-multipart
